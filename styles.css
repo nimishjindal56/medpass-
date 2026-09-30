@@ -1,0 +1,176 @@
+/* MedPass - OSHN: Modern Medical Design System (Light & Clean Theme) */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-red: #dc2626;
+  --emergency-glow: rgba(220, 38, 38, 0.2);
+  --medical-blue: #0284c7;
+  --safe-green: #059669;
+  --bg-light: #f8fafc;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-light);
+  color: #0f172a;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Light Mesh Background */
+.mesh-bg-light {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 10% 15%, rgba(244, 63, 94, 0.06) 0px, transparent 45%),
+    radial-gradient(at 90% 10%, rgba(14, 165, 233, 0.06) 0px, transparent 45%),
+    radial-gradient(at 50% 80%, rgba(99, 102, 241, 0.04) 0px, transparent 45%);
+}
+
+.hero-glow-light {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.08) 0%, rgba(2, 132, 199, 0.04) 50%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Emergency Pulse Animations */
+@keyframes pulse-emergency {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(220, 38, 38, 0);
+  }
+}
+
+.emergency-pulse {
+  animation: pulse-emergency 2.2s infinite ease-in-out;
+}
+
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-effect {
+  animation: radar-sweep 4s linear infinite;
+}
+
+/* Light Card Panels */
+.card-light {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-light-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-light-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Phone Mockup Canvas */
+.phone-mockup {
+  width: 320px;
+  height: 640px;
+  border-radius: 46px;
+  border: 10px solid #0f172a;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.phone-mockup.theme-dark {
+  background: linear-gradient(150deg, #090d16 0%, #151d30 50%, #0c1222 100%);
+}
+.phone-mockup.theme-crimson {
+  background: linear-gradient(150deg, #2a0b12 0%, #180d19 50%, #0a0e1a 100%);
+}
+.phone-mockup.theme-midnight {
+  background: linear-gradient(150deg, #031326 0%, #061e3d 50%, #040914 100%);
+}
+
+.phone-notch {
+  width: 120px;
+  height: 24px;
+  background-color: #0f172a;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+/* Physical ID Card Mockups */
+.id-card-wallet {
+  width: 380px;
+  height: 232px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0b1120 0%, #1e1b4b 60%, #172554 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.25);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.id-card-wallet:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.35);
+}
+
+/* Print Styles for Physical ID Card */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-card-area, #printable-card-area * {
+    visibility: visible;
+  }
+  #printable-card-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

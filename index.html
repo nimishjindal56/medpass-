@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedPass – Patient-Controlled Emergency Health Passport | OSHN SIH 2026</title>
+  
+  <!-- Tailwind CSS CDN with custom config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            },
+            emergency: {
+              50: '#fef2f2',
+              100: '#fee2e2',
+              500: '#ef4444',
+              600: '#dc2626',
+              700: '#b91c1c',
+            },
+            clinical: {
+              50: '#f0fdfa',
+              500: '#14b8a6',
+              600: '#0d9488',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- QRCode.js for reliable client-side QR generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white mesh-bg-light">
+
+  <!-- ============================================================== -->
+  <!-- TOP EMERGENCY SIMULATION SMS TOAST                             -->
+  <!-- ============================================================== -->
+  <div id="live-alert-toast" class="hidden fixed top-5 right-5 z-50 max-w-md w-full bg-white border-2 border-rose-500 rounded-2xl p-4 shadow-2xl shadow-rose-950/20 backdrop-blur-xl transition-all duration-300 transform translate-y-0">
+    <div class="flex items-start gap-3">
+      <div class="p-2.5 bg-rose-50 text-rose-600 rounded-xl flex-shrink-0 animate-pulse border border-rose-200">
+        <i data-lucide="bell-ring" class="w-6 h-6"></i>
+      </div>
+      <div class="flex-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span>
+            Simulated Emergency SMS Dispatch
+          </span>
+          <span class="text-[11px] text-slate-500 mono" id="toast-time">Just now</span>
+        </div>
+        <h4 class="text-sm font-bold text-slate-900 mt-1" id="toast-title">MedPass QR Code Scanned</h4>
+        <p class="text-xs text-slate-600 mt-1 leading-relaxed" id="toast-desc">
+          Emergency profile accessed at AIIMS Trauma Center. Emergency contacts alerted via SMS.
+        </p>
+      </div>
+      <button onclick="dismissAlertToast()" class="text-slate-400 hover:text-slate-700 p-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- TOP ANNOUNCEMENT & HELPLINE BAR                                -->
+  <!-- ============================================================== -->
+  <div class="bg-slate-100/90 border-b border-slate-200 text-[11px] text-slate-600 py-1.5 px-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold border border-rose-200 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span> SIH 2026 Finalist Project
+        </span>
+        <span class="hidden sm:inline text-slate-600">• Problem Statement ID: <strong>26196 (MedTech)</strong> • Team OSHN</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-700 font-medium">
+        <span class="flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3 text-rose-600"></i> National Emergency: <strong>112</strong></span>
+        <span class="flex items-center gap-1"><i data-lucide="ambulance" class="w-3 h-3 text-emerald-600"></i> Ambulance: <strong>108</strong></span>
+        <span class="hidden md:flex items-center gap-1 text-sky-700"><i data-lucide="check-circle" class="w-3 h-3 text-sky-600"></i> ABDM Compatible</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MAIN NAVIGATION HEADER                                         -->
+  <!-- ============================================================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-18 py-2.5">
+        
+        <!-- Brand Logo -->
+        <button onclick="switchTab('landing')" class="flex items-center gap-3 text-left focus:outline-none group">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-600 via-red-500 to-amber-500 p-0.5 shadow-md shadow-rose-500/20 group-hover:scale-105 transition">
+            <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+              <i data-lucide="activity" class="w-6 h-6 text-rose-600"></i>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xl font-extrabold tracking-tight text-slate-900">MedPass</span>
+              <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">OSHN</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-none">Emergency Health Passport</p>
+          </div>
+        </button>
+
+        <!-- Navigation Links -->
+        <nav class="hidden lg:flex items-center gap-1">
+          <button onclick="switchTab('landing')" id="nav-landing" class="nav-tab active px-3.5 py-2 text-xs font-semibold rounded-xl text-white bg-slate-900 transition">
+            Home & Overview
+          </button>
+          <button onclick="switchTab('patient-portal')" id="nav-patient-portal" class="nav-tab px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            Patient Portal
+          </button>
+          <button onclick="switchTab('qr-generator')" id="nav-qr-generator" class="nav-tab px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            QR & Card Studio
+          </button>
+          <button onclick="switchTab('audit-trail')" id="nav-audit-trail" class="nav-tab px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5">
+            Audit Trail
+            <span id="audit-badge" class="px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-300">3</span>
+          </button>
+          <button onclick="switchTab('doctor-portal')" id="nav-doctor-portal" class="nav-tab px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            Hospital / Doctor Portal
+          </button>
+          <button onclick="switchTab('abha-hub')" id="nav-abha-hub" class="nav-tab px-3.5 py-2 text-xs font-semibold rounded-xl text-sky-700 hover:bg-sky-50 transition">
+            ABDM / ABHA
+          </button>
+          <button onclick="switchTab('sih-presentation')" id="nav-sih-presentation" class="nav-tab px-3.5 py-2 text-xs font-semibold rounded-xl text-amber-700 hover:bg-amber-50 transition">
+            SIH Deck
+          </button>
+        </nav>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <button onclick="switchTab('emergency-scan')" id="nav-emergency-scan" class="flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 rounded-xl shadow-md shadow-rose-600/30 transition transform active:scale-95 border border-rose-500">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+            <span>Simulate ER Scan</span>
+          </button>
+
+          <button onclick="switchTab('patient-portal')" class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition">
+            <i data-lucide="user" class="w-3.5 h-3.5 text-rose-600"></i>
+            <span>My Pass</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- MAIN CONTAINER (PAGE TABS)                                     -->
+  <!-- ============================================================== -->
+  <main class="flex-1 w-full">
+
+    <!-- ============================================================== -->
+    <!-- TAB 0: PUBLIC LANDING PAGE & PRODUCT OVERVIEW                  -->
+    <!-- ============================================================== -->
+    <section id="tab-landing" class="space-y-24 py-8">
+      
+      <!-- HERO SECTION -->
+      <div class="relative overflow-hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+        <div class="hero-glow-light -top-20 left-1/4"></div>
+        <div class="hero-glow-light bottom-0 right-10"></div>
+
+        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <!-- Left Hero Column -->
+          <div class="lg:col-span-7 space-y-6 text-left">
+            
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+              <i data-lucide="shield" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span>Patient-Controlled Emergency Health Passport</span>
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
+              Your Critical Medical Identity <br class="hidden sm:inline">
+              <span class="bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 bg-clip-text text-transparent">
+                When Seconds Count.
+              </span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
+              In trauma and unconscious emergencies, every second determines survival. MedPass gives first responders instant access to your <strong>confirmed blood group, severe allergies, and emergency contacts</strong> through a secure lock-screen or physical card QR code—keeping clinical records safely encrypted.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-4 pt-2">
+              <button onclick="switchTab('patient-portal')" class="px-6 py-3.5 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-500 hover:to-red-500 text-white font-bold text-sm rounded-2xl shadow-lg shadow-rose-600/30 transition flex items-center gap-2 transform hover:-translate-y-0.5">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Create Your MedPass Now</span>
+              </button>
+
+              <button onclick="switchTab('emergency-scan')" class="px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm rounded-2xl border border-slate-300 shadow-sm transition flex items-center gap-2">
+                <i data-lucide="scan" class="w-4 h-4 text-rose-600"></i>
+                <span>Simulate Paramedic Scan</span>
+              </button>
+
+              <button onclick="switchTab('qr-generator')" class="px-5 py-3.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-sm rounded-2xl border border-slate-200 transition flex items-center gap-2">
+                <i data-lucide="smartphone" class="w-4 h-4 text-sky-600"></i>
+                <span>Lock-screen Studio</span>
+              </button>
+            </div>
+
+            <!-- Key Metric Counters -->
+            <div class="grid grid-cols-3 gap-4 pt-8 border-t border-slate-200">
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-rose-600">&lt; 3 Sec</div>
+                <div class="text-xs text-slate-500 mt-0.5">Time to reveal blood group & severe allergies</div>
+              </div>
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-slate-900">50%+</div>
+                <div class="text-xs text-slate-500 mt-0.5">Fatalities preventable in Golden Hour triage</div>
+              </div>
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-emerald-600">100%</div>
+                <div class="text-xs text-slate-500 mt-0.5">Patient-controlled privacy & audit trail</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Hero Column (Interactive Phone Mockup) -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-center">
+            
+            <div class="relative">
+              <!-- Glow backer -->
+              <div class="absolute -inset-4 bg-gradient-to-r from-rose-200 to-sky-200 rounded-[50px] blur-2xl opacity-60"></div>
+
+              <!-- Phone Mockup Container -->
+              <div class="phone-mockup flex flex-col items-center justify-between p-6 text-center select-none shadow-2xl relative z-10" id="hero-phone-preview">
+                <div class="phone-notch"></div>
+                
+                <div class="mt-8 space-y-1 w-full">
+                  <div class="flex justify-between items-center text-[10px] text-slate-400 px-2 mb-2">
+                    <span>Emergency SOS</span>
+                    <div class="flex items-center gap-1">
+                      <i data-lucide="wifi" class="w-3 h-3"></i>
+                      <i data-lucide="battery" class="w-3.5 h-3.5"></i>
+                    </div>
+                  </div>
+                  <div class="text-4xl font-extrabold text-white tracking-tight">10:45</div>
+                  <div class="text-xs font-medium text-slate-300">Wednesday, 30 September</div>
+                </div>
+
+                <!-- Emergency Card in Lockscreen -->
+                <div class="w-full bg-slate-900/90 border-2 border-rose-500/70 rounded-2xl p-4 shadow-2xl backdrop-blur-md space-y-3">
+                  <div class="flex items-center justify-between border-b border-rose-500/20 pb-2">
+                    <div class="flex items-center gap-1.5">
+                      <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500"></i>
+                      <span class="text-[11px] font-black tracking-wider text-rose-400 uppercase">Emergency Info</span>
+                    </div>
+                    <span class="text-xs font-black px-2 py-0.5 rounded bg-rose-600 text-white">O+</span>
+                  </div>
+
+                  <!-- QR Code Canvas in Hero -->
+                  <div class="flex justify-center p-2 bg-white rounded-xl shadow-inner w-32 h-32 mx-auto" id="qrcode-hero"></div>
+
+                  <div class="space-y-1 text-left">
+                    <div class="text-xs font-bold text-white truncate">Rahul Sharma</div>
+                    <div class="text-[10px] text-rose-400 font-semibold truncate">Allergy: Penicillin (Severe)</div>
+                    <div class="text-[10px] text-slate-300 font-mono truncate">ICE: Priya (+91 98765 43210)</div>
+                  </div>
+
+                  <div class="text-[9px] text-slate-400 bg-slate-950/80 rounded px-2 py-1 flex items-center justify-center gap-1">
+                    <i data-lucide="scan" class="w-3 h-3 text-rose-400"></i>
+                    Scan with any smartphone in emergency
+                  </div>
+                </div>
+
+                <div class="w-full flex justify-between items-center px-4 mb-2 text-slate-400">
+                  <div class="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center">
+                    <i data-lucide="flashlight" class="w-3.5 h-3.5 text-white"></i>
+                  </div>
+                  <div class="text-[9px] text-slate-400 font-medium">Swipe up to unlock</div>
+                  <div class="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center">
+                    <i data-lucide="camera" class="w-3.5 h-3.5 text-white"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Floating Emergency Badge -->
+              <div class="absolute -bottom-6 -left-8 bg-white border border-rose-200 rounded-2xl p-3 shadow-xl backdrop-blur-md flex items-center gap-3 z-20">
+                <div class="p-2 bg-rose-600 text-white rounded-xl shadow">
+                  <i data-lucide="siren" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Golden Hour Triage</div>
+                  <div class="text-[10px] text-rose-600 font-semibold">Click to Call ICE Kin</div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PROBLEM VS SOLUTION GRID -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-100 px-3 py-1 rounded-full border border-rose-200">
+            The Healthcare Dilemma
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900">
+            Why Traditional Medical Records Fail in Emergencies
+          </h2>
+          <p class="text-sm text-slate-600">
+            Current electronic medical records are designed for outpatient billing and desktop computers—not for an ambulance paramedic at 2 AM on a highway.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Problem Box -->
+          <div class="bg-rose-50/80 border border-rose-200 rounded-3xl p-8 space-y-4 shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="p-3 rounded-2xl bg-rose-100 text-rose-600 border border-rose-200">
+                <i data-lucide="x-circle" class="w-6 h-6"></i>
+              </div>
+              <h3 class="text-xl font-bold text-rose-900">The Emergency Status Quo</h3>
+            </div>
+            <ul class="space-y-3 text-sm text-slate-700">
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Unconscious Victims Cannot Speak:</strong> Paramedics cannot know blood groups or contraindicated drugs (e.g. fatal Penicillin or Aspirin reactions).</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Phone is Passcode Locked:</strong> Bystanders and ambulance crew cannot access emergency contacts stored inside the phone.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Fragmented Hospital Silos:</strong> Reports in Hospital A cannot be viewed by Emergency Room B in another city or state.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Family Disconnected:</strong> Next-of-kin often discover an accident hours later when police finally trace physical IDs.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- MedPass Solution Box -->
+          <div class="bg-emerald-50/80 border border-emerald-200 rounded-3xl p-8 space-y-4 shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="p-3 rounded-2xl bg-emerald-100 text-emerald-600 border border-emerald-200">
+                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+              </div>
+              <h3 class="text-xl font-bold text-emerald-900">The MedPass Breakthrough</h3>
+            </div>
+            <ul class="space-y-3 text-sm text-slate-700">
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Lock-Screen & Physical Card Access:</strong> Any phone camera scans the QR code directly from the lock screen wallpaper or physical credit-card wallet pass.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Two-Tier Privacy Protection:</strong> Tier 1 shows essential life-saving vitals in 3 seconds. Tier 2 requires Doctor Medical Council (NMC) verification.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>Automated Kin Alert:</strong> As soon as the pass is scanned in an ER, next-of-kin receives an instant SMS with hospital location.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                <span><strong>ABDM / ABHA Architecture:</strong> Seamlessly interoperable with India's Ayushman Bharat Digital Mission and EHR standard protocols.</span>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- HOW IT WORKS STEP-BY-STEP -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-sky-700 bg-sky-100 px-3 py-1 rounded-full border border-sky-200">
+            Methodology & Workflow
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900">How MedPass Protects You In 4 Steps</h2>
+          <p class="text-sm text-slate-600">Engineered to work friction-free in high-stress trauma environments.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 relative hover:shadow-lg transition">
+            <div class="text-4xl font-black text-rose-200 mb-4">01</div>
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 border border-rose-100">
+              <i data-lucide="user-check" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-900">Set Profile & Privacy</h4>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Fill blood group, severe allergies, and primary emergency contacts. Choose exactly what information stays public vs doctor-locked.
+            </p>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 relative hover:shadow-lg transition">
+            <div class="text-4xl font-black text-blue-200 mb-4">02</div>
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 border border-blue-100">
+              <i data-lucide="qr-code" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-900">Export Wallpaper & Card</h4>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Download your custom phone lock-screen wallpaper or print a standard credit-card-sized physical MedPass to keep in your wallet.
+            </p>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 relative hover:shadow-lg transition">
+            <div class="text-4xl font-black text-amber-200 mb-4">03</div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 border border-amber-100">
+              <i data-lucide="scan" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-900">Emergency First-Aid</h4>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Bystander or ambulance paramedic scans your QR code. Tier 1 triage data (blood type, allergies, ICE dialer) displays immediately.
+            </p>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 relative hover:shadow-lg transition">
+            <div class="text-4xl font-black text-emerald-200 mb-4">04</div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 border border-emerald-100">
+              <i data-lucide="stethoscope" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-900">Doctor Clinical Unlock</h4>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+              Attending ER physician verifies Medical Council ID (NMC) to unlock past surgeries and chronic records. Family gets live SMS alert.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- COMPARISON TABLE SECTION -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm overflow-x-auto">
+          <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <i data-lucide="layers" class="w-5 h-5 text-rose-600"></i>
+            MedPass Feature Comparison Matrix
+          </h3>
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-500">
+                <th class="py-3 px-4">Feature Metric</th>
+                <th class="py-3 px-4 text-rose-600 font-bold">OSHN MedPass</th>
+                <th class="py-3 px-4">Standard DigiLocker / ABHA</th>
+                <th class="py-3 px-4">Physical Paper Reports</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              <tr>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Scan from Locked Phone</td>
+                <td class="py-3.5 px-4 text-emerald-600 font-bold">✓ Yes (Wallpaper QR)</td>
+                <td class="py-3.5 px-4 text-slate-400">✗ No (Requires unlock & OTP)</td>
+                <td class="py-3.5 px-4 text-slate-400">✗ No</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Access Time for Paramedics</td>
+                <td class="py-3.5 px-4 text-emerald-600 font-bold">&lt; 3 Seconds</td>
+                <td class="py-3.5 px-4 text-slate-400">5 - 15 Minutes</td>
+                <td class="py-3.5 px-4 text-slate-400">Often Missing / Lost</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Family SMS Dispatch on Scan</td>
+                <td class="py-3.5 px-4 text-emerald-600 font-bold">✓ Automated Instant SMS</td>
+                <td class="py-3.5 px-4 text-slate-400">✗ None</td>
+                <td class="py-3.5 px-4 text-slate-400">✗ None</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Patient-Controlled Privacy Toggles</td>
+                <td class="py-3.5 px-4 text-emerald-600 font-bold">✓ Granular Field Toggles</td>
+                <td class="py-3.5 px-4 text-slate-400">Partial</td>
+                <td class="py-3.5 px-4 text-slate-400">✗ None</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Audited Scan History & Revocation</td>
+                <td class="py-3.5 px-4 text-emerald-600 font-bold">✓ Real-time Timestamp & GPS Log</td>
+                <td class="py-3.5 px-4 text-slate-400">Standard Access Log</td>
+                <td class="py-3.5 px-4 text-slate-400">✗ Impossible</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CALL TO ACTION BANNER -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white rounded-3xl p-8 sm:p-12 text-center space-y-6 shadow-xl relative overflow-hidden">
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Ready to Experience MedPass in Action?
+          </h2>
+          <p class="text-sm sm:text-base text-rose-100 max-w-2xl mx-auto">
+            Test the live interactive prototype right now. Create an emergency profile, generate your phone lock-screen wallpaper, or simulate scanning in an ER.
+          </p>
+          <div class="flex flex-wrap justify-center gap-4">
+            <button onclick="switchTab('patient-portal')" class="px-8 py-3.5 bg-white text-rose-700 hover:bg-rose-50 font-bold text-sm rounded-2xl shadow-lg transition">
+              Launch Patient Portal
+            </button>
+            <button onclick="switchTab('emergency-scan')" class="px-8 py-3.5 bg-rose-800/80 hover:bg-rose-800 text-white font-bold text-sm rounded-2xl border border-rose-400 transition">
+              Simulate Emergency Scan
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- TAB 1: PATIENT PORTAL & PROFILE SETUP                          -->
+    <!-- ============================================================== -->
+    <div id="tab-patient-portal" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <!-- Welcome & Quick Status Banner -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 border-2 border-slate-200 p-1 flex items-center justify-center text-2xl font-bold text-slate-700 shadow-inner">
+              RS
+            </div>
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900" id="header-patient-name">Rahul Sharma</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                  <i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i> Profile Verified
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 flex items-center gap-1">
+                  <i data-lucide="badge-check" class="w-3 h-3 text-sky-600"></i> ABHA Linked
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                <span>ABHA Address: <strong class="text-slate-700 mono" id="header-abha-id">rahul.sharma@abdm</strong></span>
+                <span>•</span>
+                <span>MedPass ID: <strong class="text-slate-700 mono">MP-2026-9821-DEL</strong></span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <button onclick="switchTab('qr-generator')" class="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 transition shadow-sm">
+              <i data-lucide="smartphone" class="w-4 h-4 text-rose-600"></i>
+              Lock-screen Card
+            </button>
+            <button onclick="switchTab('emergency-scan')" class="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-rose-600/30 transition">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+              Simulate QR Scan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid layout for Profile & Privacy Settings -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Column 1 & 2: Medical Profile Data Form -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Emergency Vitals Card -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                  <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900">Emergency Vital Details</h3>
+                  <p class="text-xs text-slate-500">Critical metrics shown to paramedics in first 30 seconds</p>
+                </div>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200">Tier 1: Vital</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Blood Group -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Blood Group & Rh</label>
+                <select id="profile-blood-group" onchange="updateProfileState()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-rose-600 focus:outline-none focus:border-rose-500 focus:bg-white transition">
+                  <option value="O+">O Positive (O+)</option>
+                  <option value="O-">O Negative (O-)</option>
+                  <option value="A+">A Positive (A+)</option>
+                  <option value="A-">A Negative (A-)</option>
+                  <option value="B+">B Positive (B+)</option>
+                  <option value="B-">B Negative (B-)</option>
+                  <option value="AB+">AB Positive (AB+)</option>
+                  <option value="AB-">AB Negative (AB-)</option>
+                </select>
+              </div>
+
+              <!-- Age & Gender -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Age & Gender</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="number" id="profile-age" value="28" oninput="updateProfileState()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white transition" placeholder="Age">
+                  <select id="profile-gender" onchange="updateProfileState()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-sm text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white transition">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Organ Donor Status -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Organ Donor Status</label>
+                <select id="profile-organ-donor" onchange="updateProfileState()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-emerald-700 font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                  <option value="Yes">Yes, Registered Donor</option>
+                  <option value="No">No / Not Registered</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Severe Allergies Section -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+                  Severe Allergies (Red-Alert on Scan)
+                </label>
+                <span class="text-[11px] text-slate-500">Separate by commas</span>
+              </div>
+              <input type="text" id="profile-allergies" value="Penicillin (Anaphylaxis risk), Sulfa Drugs, Peanuts" oninput="updateProfileState()" class="w-full bg-slate-50 border border-amber-300 rounded-xl px-4 py-2.5 text-sm text-amber-900 focus:outline-none focus:border-amber-500 focus:bg-white transition" placeholder="e.g. Penicillin, Aspirin, Shellfish">
+              <div class="flex flex-wrap gap-2 mt-2" id="allergy-tags-preview">
+                <!-- dynamic tags -->
+              </div>
+            </div>
+
+            <!-- Chronic Conditions -->
+            <div class="mt-4">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">Chronic Medical Conditions</label>
+              <input type="text" id="profile-conditions" value="Type 2 Diabetes, Mild Asthma (Carries Inhaler)" oninput="updateProfileState()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-rose-500 focus:bg-white transition" placeholder="e.g. Epilepsy, Diabetes, Hypertension">
+            </div>
+
+            <!-- Current Critical Medications -->
+            <div class="mt-4">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">Ongoing Critical Medications & Implants</label>
+              <input type="text" id="profile-meds" value="Metformin 500mg (Daily), Salbutamol Inhaler (PRN), No Metal Implants" oninput="updateProfileState()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-rose-500 focus:bg-white transition" placeholder="e.g. Insulin, Beta-blockers, Pacemaker installed in 2022">
+            </div>
+
+            <!-- Special Emergency Notes -->
+            <div class="mt-4">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">Special Medical Directives / Notes</label>
+              <textarea id="profile-notes" rows="2" oninput="updateProfileState()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-rose-500 focus:bg-white transition" placeholder="Notes for emergency doctor...">Patient carries emergency EpiPen in backpack. In case of respiratory distress, avoid high sedation.</textarea>
+            </div>
+          </div>
+
+          <!-- Emergency Contacts Section -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <i data-lucide="phone-call" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900">Emergency Contacts (ICE)</h3>
+                  <p class="text-xs text-slate-500">Who to call and SMS notify when emergency scan happens</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Primary Contact -->
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-emerald-600"></i> Primary ICE Contact
+                  </span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold">Instant Dial</span>
+                </div>
+                <div class="space-y-2">
+                  <input type="text" id="contact1-name" value="Priya Sharma" oninput="updateProfileState()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900" placeholder="Name">
+                  <input type="text" id="contact1-rel" value="Spouse (Wife)" oninput="updateProfileState()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600" placeholder="Relationship">
+                  <input type="text" id="contact1-phone" value="+91 98765 43210" oninput="updateProfileState()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-emerald-700 font-mono font-bold" placeholder="Phone Number">
+                </div>
+              </div>
+
+              <!-- Secondary Contact -->
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Secondary / Doctor
+                  </span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-600 font-semibold">Backup</span>
+                </div>
+                <div class="space-y-2">
+                  <input type="text" id="contact2-name" value="Dr. Arvind Verma" oninput="updateProfileState()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900" placeholder="Name">
+                  <input type="text" id="contact2-rel" value="Family Physician" oninput="updateProfileState()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600" placeholder="Relationship">
+                  <input type="text" id="contact2-phone" value="+91 91234 56789" oninput="updateProfileState()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-sky-700 font-mono font-bold" placeholder="Phone Number">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3: Patient-Controlled Privacy & Access Matrix (SIH Highlight) -->
+        <div class="space-y-6">
+          
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm sticky top-24">
+            <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-4">
+              <div class="p-2 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Patient Privacy Control</h3>
+                <p class="text-xs text-slate-500">Control what is shown on public scan vs doctor unlock</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <!-- Toggle 1: Blood Group -->
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <div>
+                  <div class="text-xs font-semibold text-slate-900">Show Blood Group</div>
+                  <div class="text-[11px] text-slate-500">Immediate public visibility</div>
+                </div>
+                <input type="checkbox" id="privacy-blood" checked onchange="updatePrivacySettings()" class="w-5 h-5 accent-rose-600 rounded cursor-pointer">
+              </div>
+
+              <!-- Toggle 2: Allergies -->
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <div>
+                  <div class="text-xs font-semibold text-slate-900">Show Allergies on Scan</div>
+                  <div class="text-[11px] text-slate-500">Crucial for emergency drug safety</div>
+                </div>
+                <input type="checkbox" id="privacy-allergies" checked onchange="updatePrivacySettings()" class="w-5 h-5 accent-rose-600 rounded cursor-pointer">
+              </div>
+
+              <!-- Toggle 3: Emergency Contacts -->
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <div>
+                  <div class="text-xs font-semibold text-slate-900">Show Phone Numbers</div>
+                  <div class="text-[11px] text-slate-500">Allows bystanders to call family</div>
+                </div>
+                <input type="checkbox" id="privacy-contacts" checked onchange="updatePrivacySettings()" class="w-5 h-5 accent-rose-600 rounded cursor-pointer">
+              </div>
+
+              <!-- Toggle 4: Full Chronic Conditions -->
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <div>
+                  <div class="text-xs font-semibold text-slate-900">Require Doctor Auth for Conditions</div>
+                  <div class="text-[11px] text-slate-500">Hides chronic conditions until doctor verifies ID</div>
+                </div>
+                <input type="checkbox" id="privacy-conditions-locked" checked onchange="updatePrivacySettings()" class="w-5 h-5 accent-purple-600 rounded cursor-pointer">
+              </div>
+
+              <!-- Toggle 5: Medication list lock -->
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <div>
+                  <div class="text-xs font-semibold text-slate-900">Require Doctor Auth for Prescriptions</div>
+                  <div class="text-[11px] text-slate-500">Protects medication privacy</div>
+                </div>
+                <input type="checkbox" id="privacy-meds-locked" checked onchange="updatePrivacySettings()" class="w-5 h-5 accent-purple-600 rounded cursor-pointer">
+              </div>
+
+              <!-- Toggle 6: SMS Notification on Scan -->
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-rose-50 border border-rose-200">
+                <div>
+                  <div class="text-xs font-bold text-rose-800">Instant Alert to ICE Contacts</div>
+                  <div class="text-[11px] text-rose-600">Triggers SMS when QR is scanned</div>
+                </div>
+                <input type="checkbox" id="privacy-sms-alert" checked onchange="updatePrivacySettings()" class="w-5 h-5 accent-rose-600 rounded cursor-pointer">
+              </div>
+            </div>
+
+            <!-- Save & Live Sync notification -->
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-[11px] text-emerald-700 flex items-center gap-1.5 font-semibold">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i> Changes saved locally
+              </span>
+              <button onclick="saveProfileNotification()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow transition">
+                Sync Changes
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 2: QR & CARD / LOCKSCREEN EXPORTER                         -->
+    <!-- ============================================================== -->
+    <div id="tab-qr-generator" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">MedPass Export & Generation Studio</h2>
+        <p class="text-sm text-slate-600">Generate your emergency phone lock-screen wallpaper, or download your credit-card-sized physical MedPass for your wallet.</p>
+        
+        <!-- Wallpaper Theme Selector -->
+        <div class="flex justify-center gap-2 pt-2">
+          <button onclick="setWallpaperTheme('theme-dark')" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white shadow-sm">Cyber Dark</button>
+          <button onclick="setWallpaperTheme('theme-crimson')" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-200">Crimson Alert</button>
+          <button onclick="setWallpaperTheme('theme-midnight')" class="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 hover:bg-sky-200 text-sky-800 border border-sky-200">Midnight Blue</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        
+        <!-- EXPORTER 1: Phone Lockscreen Wallpaper Generator -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col items-center shadow-sm">
+          <div class="w-full flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <div class="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                <i data-lucide="smartphone" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Lock-Screen Emergency Wallpaper</h3>
+                <p class="text-xs text-slate-500">Keep accessible even when phone is locked</p>
+              </div>
+            </div>
+            <button onclick="downloadLockscreenImage()" class="flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition shadow">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              Download Wallpaper (PNG)
+            </button>
+          </div>
+
+          <!-- Phone Mockup Container -->
+          <div class="phone-mockup theme-dark flex flex-col items-center justify-between p-6 text-center select-none" id="phone-preview-card">
+            <div class="phone-notch"></div>
+            
+            <!-- Lock Screen Header (Time & Date) -->
+            <div class="mt-8 space-y-1 w-full">
+              <div class="flex justify-between items-center text-[10px] text-slate-400 px-2 mb-2">
+                <span>Airtel 5G</span>
+                <div class="flex items-center gap-1">
+                  <i data-lucide="wifi" class="w-3 h-3"></i>
+                  <i data-lucide="battery" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <div class="text-4xl font-extrabold text-white tracking-tight" id="lockscreen-clock">10:45</div>
+              <div class="text-xs font-medium text-slate-300" id="lockscreen-date">Wednesday, 30 September</div>
+            </div>
+
+            <!-- Emergency Card Overlay in Lockscreen -->
+            <div class="w-full bg-slate-900/90 border-2 border-rose-500/60 rounded-2xl p-4 shadow-2xl backdrop-blur-md space-y-3">
+              <div class="flex items-center justify-between border-b border-rose-500/20 pb-2">
+                <div class="flex items-center gap-1.5">
+                  <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500"></i>
+                  <span class="text-[11px] font-black tracking-wider text-rose-400 uppercase">Emergency Info</span>
+                </div>
+                <span class="text-xs font-black px-2 py-0.5 rounded bg-rose-600 text-white" id="ls-blood">O+</span>
+              </div>
+
+              <!-- Live QR Code Canvas inside phone -->
+              <div class="flex justify-center p-2 bg-white rounded-xl shadow-inner w-36 h-36 mx-auto" id="qrcode-lockscreen"></div>
+
+              <div class="space-y-1 text-left">
+                <div class="text-xs font-bold text-white truncate" id="ls-name">Rahul Sharma</div>
+                <div class="text-[10px] text-rose-400 font-semibold truncate" id="ls-allergies">Allergy: Penicillin</div>
+                <div class="text-[10px] text-slate-300 font-mono truncate" id="ls-ice">ICE: Priya (+91 98765 43210)</div>
+              </div>
+
+              <div class="text-[9px] text-slate-400 bg-slate-950/80 rounded px-2 py-1 flex items-center justify-center gap-1">
+                <i data-lucide="scan" class="w-3 h-3 text-rose-400"></i>
+                Scan with any camera in emergency
+              </div>
+            </div>
+
+            <!-- Bottom Flashlight & Camera Icons -->
+            <div class="w-full flex justify-between items-center px-4 mb-2 text-slate-400">
+              <div class="w-9 h-9 rounded-full bg-slate-800/80 backdrop-blur-md flex items-center justify-center">
+                <i data-lucide="flashlight" class="w-4 h-4 text-white"></i>
+              </div>
+              <div class="text-[10px] text-slate-400 font-medium">Swipe up to unlock</div>
+              <div class="w-9 h-9 rounded-full bg-slate-800/80 backdrop-blur-md flex items-center justify-center">
+                <i data-lucide="camera" class="w-4 h-4 text-white"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPORTER 2: Printable Physical Wallet Card (Front & Back) -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col items-center shadow-sm">
+          <div class="w-full flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <div class="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Physical MedPass Wallet Card</h3>
+                <p class="text-xs text-slate-500">ISO standard credit card format (CR80)</p>
+              </div>
+            </div>
+            <button onclick="window.print()" class="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+              Print Physical Card
+            </button>
+          </div>
+
+          <div id="printable-card-area" class="space-y-6 flex flex-col items-center">
+            
+            <!-- CARD FRONT -->
+            <div class="id-card-wallet p-5 flex flex-col justify-between text-white border border-slate-700/80">
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-rose-600 flex items-center justify-center font-bold text-white">
+                    <i data-lucide="activity" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-black tracking-wider uppercase text-rose-400">OSHN • MedPass</div>
+                    <div class="text-[9px] text-slate-300">National Emergency Health ID</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-black px-2.5 py-1 rounded-md bg-rose-600 text-white font-mono" id="card-blood">O+</span>
+                  <div class="text-[8px] text-slate-400 mt-0.5">BLOOD TYPE</div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4 my-2">
+                <div class="w-14 h-14 rounded-xl bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-300 text-lg">
+                  RS
+                </div>
+                <div class="space-y-0.5">
+                  <div class="text-sm font-black text-white" id="card-name">Rahul Sharma</div>
+                  <div class="text-[10px] text-slate-300 mono" id="card-abha">ABHA: rahul.sharma@abdm</div>
+                  <div class="text-[10px] text-amber-300 font-semibold" id="card-allergies-preview">⚠️ Allergy: Penicillin</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[9px] text-slate-300 border-t border-slate-700/60 pt-2">
+                <div>
+                  <span class="text-slate-400">ICE: </span>
+                  <strong class="text-white" id="card-ice">+91 98765 43210 (Priya)</strong>
+                </div>
+                <div class="flex items-center gap-1 text-emerald-400 font-bold">
+                  <i data-lucide="heart" class="w-3 h-3 fill-emerald-400"></i> ORGAN DONOR
+                </div>
+              </div>
+            </div>
+
+            <!-- CARD BACK -->
+            <div class="id-card-wallet p-5 flex flex-col justify-between text-white border border-slate-700/80 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest">EMERGENCY SCANNER PORTAL</span>
+                <span class="text-[9px] text-slate-400 mono">VER: 2026.1</span>
+              </div>
+
+              <div class="flex items-center gap-4 my-auto">
+                <div class="p-1.5 bg-white rounded-xl shadow-md w-24 h-24 flex items-center justify-center" id="qrcode-wallet-card"></div>
+                <div class="text-left space-y-1 flex-1">
+                  <div class="text-[10px] font-bold text-slate-200">INSTRUCTIONS FOR FIRST RESPONDERS:</div>
+                  <p class="text-[9px] text-slate-400 leading-tight">
+                    Scan with smartphone camera to retrieve critical triage profile, blood group, & authorized doctor clinical view.
+                  </p>
+                  <div class="text-[9px] text-rose-300 font-mono pt-1">
+                    Emergency Toll-Free: 112 / 108
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-center text-[8px] text-slate-500 border-t border-slate-800 pt-1.5">
+                Compliant with ABDM & National Health Authority (NHA) Guidelines
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 3: EMERGENCY RESPONDER / DOCTOR SCAN (TRIAGE)              -->
+    <!-- ============================================================== -->
+    <div id="tab-emergency-scan" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <!-- EMERGENCY LIVE BANNER (High Visibility Panic Red) -->
+      <div class="bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-rose-600/30 relative overflow-hidden emergency-pulse border-2 border-rose-500">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="p-3 bg-white text-rose-600 rounded-2xl shadow-md">
+              <i data-lucide="siren" class="w-8 h-8 animate-bounce"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black uppercase tracking-wider bg-rose-800 text-white px-2 py-0.5 rounded">Emergency Triage View</span>
+                <span class="text-xs text-rose-100 font-mono">Scan Active</span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1">MedPass Critical Medical Profile</h2>
+              <p class="text-xs text-rose-100">First-aid triage data for paramedical and trauma response</p>
+            </div>
+          </div>
+
+          <!-- Doctor Verification Button -->
+          <button onclick="openDoctorAuthModal()" id="btn-doctor-auth" class="flex items-center gap-2 px-5 py-3 bg-white hover:bg-rose-50 text-rose-700 font-extrabold text-xs sm:text-sm rounded-2xl shadow-md transition transform active:scale-95">
+            <i data-lucide="stethoscope" class="w-5 h-5 text-rose-600"></i>
+            <span>Doctor / Hospital Unlock</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TIER 1: CRITICAL FIRST-AID VITALS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Blood Group Giant Badge -->
+        <div class="bg-white border-2 border-rose-200 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Confirmed Blood Group</span>
+          <div class="text-6xl sm:text-7xl font-black text-rose-600 tracking-tight my-2 drop-shadow-sm" id="scan-view-blood">
+            O+
+          </div>
+          <span class="text-xs font-bold text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">O Positive (Rh+)</span>
+          
+          <div class="mt-4 pt-4 border-t border-slate-100 w-full flex items-center justify-center gap-2 text-xs text-emerald-700 font-semibold">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Organ Donor Registered
+          </div>
+        </div>
+
+        <!-- Severe Allergies Box -->
+        <div class="bg-white border-2 border-amber-200 rounded-3xl p-6 shadow-sm md:col-span-2 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <span class="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> Critical Drug & Food Allergies
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">HIGH ALERT</span>
+            </div>
+            
+            <div class="space-y-3" id="scan-view-allergies-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 mt-4 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 flex-shrink-0 text-amber-600"></i>
+            <span>Do not administer highlighted drugs without checking alternative emergency protocols.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Emergency Contacts (1-Tap Call) -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <i data-lucide="phone-forwarded" class="w-4 h-4 text-emerald-600"></i>
+          Emergency Contacts (Click to Call Now)
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Primary Contact Call Button -->
+          <button type="button" onclick="initiateEmergencyCall(0)" class="flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100/80 border-2 border-emerald-300 rounded-2xl transition group text-left w-full cursor-pointer shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="p-3 bg-emerald-600 text-white rounded-xl shadow-md group-hover:scale-105 transition">
+                <i data-lucide="phone-call" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="text-xs text-emerald-800 font-bold uppercase" id="scan-view-ice1-rel">Primary ICE: Spouse</div>
+                <div class="text-base font-bold text-slate-900" id="scan-view-ice1-name">Priya Sharma</div>
+                <div class="text-xs font-mono text-emerald-700 font-bold" id="scan-view-ice1-phone">+91 98765 43210</div>
+              </div>
+            </div>
+            <span class="text-xs font-black bg-emerald-600 group-hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm">
+              CALL <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+            </span>
+          </button>
+
+          <!-- Secondary Contact Call Button -->
+          <button type="button" onclick="initiateEmergencyCall(1)" class="flex items-center justify-between p-4 bg-sky-50 hover:bg-sky-100/80 border-2 border-sky-300 rounded-2xl transition group text-left w-full cursor-pointer shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="p-3 bg-sky-600 text-white rounded-xl shadow-md group-hover:scale-105 transition">
+                <i data-lucide="user-check" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="text-xs text-sky-800 font-bold uppercase" id="scan-view-ice2-rel">Family Physician</div>
+                <div class="text-base font-bold text-slate-900" id="scan-view-ice2-name">Dr. Arvind Verma</div>
+                <div class="text-xs font-mono text-sky-700 font-bold" id="scan-view-ice2-phone">+91 91234 56789</div>
+              </div>
+            </div>
+            <span class="text-xs font-black bg-sky-600 group-hover:bg-sky-500 text-white px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm">
+              CALL <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TIER 2: CLINICAL DATA SECTION (Locked unless Doctor Verified) -->
+      <div id="tier2-clinical-section" class="relative rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm overflow-hidden">
+        
+        <!-- LOCKED OVERLAY (Shown by default) -->
+        <div id="tier2-locked-overlay" class="absolute inset-0 bg-white/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-6 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shadow-md mb-4">
+            <i data-lucide="lock" class="w-8 h-8 text-rose-600"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Full Clinical History Protected</h3>
+          <p class="text-xs text-slate-600 max-w-md mt-1 mb-4">
+            Patient privacy policy requires verified Doctor / Paramedic Medical Council credentials to unlock detailed chronic conditions and surgical history.
+          </p>
+          <button onclick="openDoctorAuthModal()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-xs rounded-xl shadow-md transition">
+            <i data-lucide="key" class="w-4 h-4"></i>
+            Verify Healthcare Professional ID
+          </button>
+        </div>
+
+        <!-- UNLOCKED CLINICAL DATA (revealed upon auth) -->
+        <div>
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+            <div class="flex items-center gap-2">
+              <div class="p-2 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+                <i data-lucide="stethoscope" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Tier 2: Comprehensive Clinical Dossier</h3>
+                <p class="text-xs text-emerald-700 flex items-center gap-1 font-semibold" id="doctor-verified-badge">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified by Dr. R. Verma (NMC #98214)
+                </p>
+              </div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">Access Authorized</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chronic Conditions</h4>
+                <p class="text-sm text-slate-800" id="scan-view-conditions">Type 2 Diabetes Mellitus (HbA1c: 6.8), Mild Bronchial Asthma.</p>
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Active Prescriptions & Regimen</h4>
+                <p class="text-sm text-slate-800" id="scan-view-meds">Tab Metformin 500mg BD, Inhaler Salbutamol 100mcg as required.</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Special Directives & Anesthesia Notes</h4>
+                <p class="text-sm text-slate-800" id="scan-view-notes">Carries emergency EpiPen in backpack. Avoid halogenated anesthetics if possible.</p>
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Linked ABDM Health Records</h4>
+                <div class="flex items-center justify-between text-xs text-sky-700 bg-sky-50 p-2.5 rounded-xl border border-sky-200">
+                  <span class="flex items-center gap-1.5"><i data-lucide="file-text" class="w-4 h-4"></i> Discharge Summary - Max Hospital (2024)</span>
+                  <span class="text-[10px] text-slate-500">PDF • 1.2 MB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 4: ACCESS AUDIT TRAIL & RADAR MAP                          -->
+    <!-- ============================================================== -->
+    <div id="tab-audit-trail" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Security & Access Audit Trail</h2>
+          <p class="text-xs text-slate-500">Complete, tamper-evident log of every time your MedPass QR was scanned</p>
+        </div>
+        <button onclick="clearAuditLogs()" class="text-xs text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 transition bg-white shadow-sm">
+          Clear Demo Logs
+        </button>
+      </div>
+
+      <!-- Audit summary metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">Total Emergency Scans</div>
+          <div class="text-2xl font-black text-slate-900 mt-1" id="stat-total-scans">3</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">Doctor Unlocks</div>
+          <div class="text-2xl font-black text-purple-600 mt-1" id="stat-doctor-scans">1</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">SMS Alerts Dispatched</div>
+          <div class="text-2xl font-black text-emerald-600 mt-1" id="stat-sms-sent">3</div>
+        </div>
+      </div>
+
+      <!-- Live Simulated Radar Map -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            Simulated Trauma Geo-Radar (Delhi NCR Emergency Network)
+          </span>
+          <span class="text-[11px] text-slate-500 mono">GPS Node: 28.5672° N, 77.2100° E</span>
+        </div>
+
+        <div class="h-44 sm:h-52 w-full rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden flex items-center justify-center text-white">
+          <!-- Radar Circles -->
+          <div class="absolute w-72 h-72 rounded-full border border-slate-800"></div>
+          <div class="absolute w-48 h-48 rounded-full border border-slate-800/80"></div>
+          <div class="absolute w-24 h-24 rounded-full border border-slate-700/60"></div>
+          <!-- Sweep line -->
+          <div class="absolute w-36 h-36 border-t-2 border-r-2 border-rose-500/40 rounded-full radar-sweep-effect pointer-events-none"></div>
+
+          <!-- Pulsing Map Points -->
+          <div class="absolute top-1/3 left-1/3 flex items-center gap-1.5 bg-rose-500/20 text-rose-300 px-2 py-1 rounded-lg border border-rose-500/40 text-[10px] font-bold">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> AIIMS Trauma Center (Scan Logged)
+          </div>
+
+          <div class="absolute bottom-1/4 right-1/4 flex items-center gap-1.5 bg-blue-500/20 text-blue-300 px-2 py-1 rounded-lg border border-blue-500/40 text-[10px] font-bold">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span> Apollo Ambulance #04
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Audit Timeline -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+        <div class="space-y-4" id="audit-logs-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Revoke / Security Re-issue Card -->
+      <div class="bg-rose-50 border border-rose-200 rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-rose-600"></i>
+            Lost your physical QR Card or Phone?
+          </h4>
+          <p class="text-xs text-slate-600 mt-1">
+            Instantly regenerate your secure QR token. All previous physical cards and lock-screens will immediately stop working.
+          </p>
+        </div>
+        <button onclick="regenerateQRToken()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow transition flex-shrink-0">
+          Revoke & Generate New QR
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 5: HOSPITAL & DOCTOR PROVIDER PORTAL                       -->
+    <!-- ============================================================== -->
+    <div id="tab-doctor-portal" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <div class="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white rounded-3xl p-8 shadow-xl">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-white">
+              <i data-lucide="hospital" class="w-8 h-8"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black uppercase tracking-wider bg-purple-900/60 text-white px-2 py-0.5 rounded">Healthcare Provider Portal</span>
+                <span class="text-xs text-purple-200">Trauma & ER Terminal</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mt-1">Emergency Hospital Terminal</h2>
+              <p class="text-xs text-purple-100">Authorized lookup for Paramedics, Ambulance Fleets, & Emergency Departments</p>
+            </div>
+          </div>
+          <div class="px-4 py-2 rounded-2xl bg-white/20 text-white border border-white/30 text-xs font-bold flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4"></i> National Medical Registry Connected
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Quick Emergency Token Lookup -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="search" class="w-4 h-4 text-purple-600"></i>
+            Direct MedPass Lookup
+          </h3>
+          <p class="text-xs text-slate-500">
+            If physical card camera scan is blurred, enter the 8-character emergency token printed under the QR code.
+          </p>
+          <div class="space-y-3">
+            <input type="text" id="token-search-input" value="MP-2026-9821-DEL" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 mono font-bold focus:outline-none focus:border-purple-500 focus:bg-white transition">
+            <button onclick="switchTab('emergency-scan')" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl transition shadow">
+              Fetch Triage Record
+            </button>
+          </div>
+        </div>
+
+        <!-- Center: Provider Verification Status -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4 lg:col-span-2">
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i>
+            Active Attending Physician Credentials
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+              <span class="text-[10px] text-slate-500 font-bold uppercase">Attending Doctor</span>
+              <div class="text-sm font-bold text-slate-900">Dr. Rajesh Verma, MD (Emergency Medicine)</div>
+              <div class="text-xs text-emerald-700 font-mono font-semibold">NMC ID: 2018-98421 (Active & Verified)</div>
+            </div>
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+              <span class="text-[10px] text-slate-500 font-bold uppercase">Registered Hospital / Unit</span>
+              <div class="text-sm font-bold text-slate-900">AIIMS Trauma Center, Emergency Ward</div>
+              <div class="text-xs text-slate-500">Rohini / Ansari Nagar Hub</div>
+            </div>
+          </div>
+          <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl text-xs text-purple-900 flex items-center justify-between">
+            <span>Fast-scan protocol enabled for 108 Ambulance Units in Delhi NCR region.</span>
+            <span class="font-bold underline cursor-pointer text-purple-700" onclick="switchTab('emergency-scan')">Open Scanner</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 6: ABDM / ABHA ECOSYSTEM INTEGRATION                       -->
+    <!-- ============================================================== -->
+    <div id="tab-abha-hub" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <div class="bg-gradient-to-r from-sky-700 via-blue-700 to-sky-800 text-white rounded-3xl p-8 shadow-xl">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-white">
+              <i data-lucide="landmark" class="w-8 h-8"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black uppercase tracking-wider bg-sky-900/60 text-white px-2 py-0.5 rounded">Ayushman Bharat</span>
+                <span class="text-xs text-sky-200">ABDM Consent Architecture</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mt-1">National Health Authority Integration</h2>
+              <p class="text-xs text-sky-100">MedPass connects with your Ayushman Bharat Health Account (ABHA)</p>
+            </div>
+          </div>
+          <div class="px-4 py-2 rounded-2xl bg-white/20 text-white border border-white/30 text-xs font-bold flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Connected to NHA Gateway
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="shield" class="w-4 h-4 text-sky-600"></i>
+            Linked ABHA Credentials
+          </h3>
+          <div class="space-y-3">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span class="text-[10px] text-slate-500 uppercase font-bold">14-Digit ABHA Number</span>
+              <div class="text-sm font-mono text-slate-900 font-bold">91-4567-8912-3456</div>
+            </div>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span class="text-[10px] text-slate-500 uppercase font-bold">ABHA Address (PHR)</span>
+              <div class="text-sm font-mono text-sky-700 font-bold">rahul.sharma@abdm</div>
+            </div>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span class="text-[10px] text-slate-500 uppercase font-bold">HIP / Health Information Provider</span>
+              <div class="text-sm text-slate-800">AIIMS New Delhi, Max Healthcare</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="file-check" class="w-4 h-4 text-emerald-600"></i>
+            Emergency Consent Manager Policy
+          </h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            In standard scenarios, ABDM requires active OTP consent from the patient. In a life-threatening trauma emergency where the patient is unresponsive, MedPass provides a pre-delegated, break-glass emergency consent token compliant with Section 4 of the ABDM EHR Guidelines.
+          </p>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-700 font-medium">Break-Glass Emergency Protocol</span>
+              <span class="text-emerald-700 font-bold">Active & Enabled</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-700 font-medium">Auto-Notify Kin via SMS</span>
+              <span class="text-emerald-700 font-bold">Enabled</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 7: SIH 2026 PRESENTATION PITCH DECK                       -->
+    <!-- ============================================================== -->
+    <div id="tab-sih-presentation" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">
+          Smart India Hackathon 2026
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Project Presentation & Architecture</h2>
+        <p class="text-xs sm:text-sm text-slate-600">Team OSHN • Problem Statement ID #26196 • Theme: MedTech</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Slide Card 1: Problem & Solution -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <span class="text-xs font-bold text-rose-600 uppercase">Slide 2: Proposed Solution</span>
+            <span class="text-[10px] text-slate-400 mono">OSHN-02</span>
+          </div>
+          <h4 class="text-base font-bold text-slate-900">Patient-Controlled Emergency Health Passport</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            A digital health passport keeping critical medical info accessible when needed. Patients get a unique QR code on their phone lock screen and wallet card. In emergency, authorized healthcare professionals scan the QR to access only pre-configured emergency triage information.
+          </p>
+          <div class="text-xs font-semibold text-emerald-700 pt-2 flex items-center gap-1">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Unconscious patient support with audit trail
+          </div>
+        </div>
+
+        <!-- Slide Card 2: Tech Stack -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <span class="text-xs font-bold text-blue-600 uppercase">Slide 3: Technical Approach</span>
+            <span class="text-[10px] text-slate-400 mono">OSHN-03</span>
+          </div>
+          <h4 class="text-base font-bold text-slate-900">Full-Stack Tech Architecture</h4>
+          <ul class="text-xs text-slate-600 space-y-1.5">
+            <li>• <strong>Frontend:</strong> React / HTML5, Tailwind CSS, Lucide Icons, Canvas</li>
+            <li>• <strong>Backend:</strong> Python, FastAPI (High-performance Async API)</li>
+            <li>• <strong>Database:</strong> PostgreSQL / SQLite with indexed secure tokens</li>
+            <li>• <strong>Security:</strong> Tokenized QR payloads, NMC Doctor verification</li>
+            <li>• <strong>Future Integration:</strong> ABDM / ABHA Ecosystem</li>
+          </ul>
+        </div>
+
+        <!-- Slide Card 3: Feasibility & Viability -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <span class="text-xs font-bold text-purple-600 uppercase">Slide 4: Feasibility & Viability</span>
+            <span class="text-[10px] text-slate-400 mono">OSHN-04</span>
+          </div>
+          <h4 class="text-base font-bold text-slate-900">Implementation Strategy</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Does not require specialized hardware for initial deployment. Operates via standard phone cameras and printed QR cards. Risk mitigation relies on role-based authentication, minimal public data exposure, and instant SMS audit notifications.
+          </p>
+        </div>
+
+        <!-- Slide Card 4: Impact & Benefits -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <span class="text-xs font-bold text-emerald-600 uppercase">Slide 5: Impact & Benefits</span>
+            <span class="text-[10px] text-slate-400 mono">OSHN-05</span>
+          </div>
+          <h4 class="text-base font-bold text-slate-900">National Healthcare Impact</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Eliminates lost-time during highway accidents and unconscious trauma cases. Prevents fatal medication errors by instantly flagging allergies. Scalable for national ambulance networks, schools, industrial workers, and travelers.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- DOCTOR AUTHENTICATION MODAL                                    -->
+  <!-- ============================================================== -->
+  <div id="doctor-auth-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
+            <i data-lucide="stethoscope" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Doctor Clinical Verification</h3>
+            <p class="text-xs text-slate-500">Unlock Tier 2 Comprehensive Records</p>
+          </div>
+        </div>
+        <button onclick="closeDoctorAuthModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Doctor Full Name</label>
+          <input type="text" id="doc-auth-name" value="Dr. Rajesh Verma" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Medical Registration Number (NMC / SMC)</label>
+          <input type="text" id="doc-auth-reg" value="NMC-2018-98421" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-rose-700 mono font-bold focus:outline-none focus:border-rose-500 focus:bg-white transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Hospital / Emergency Unit</label>
+          <input type="text" id="doc-auth-hospital" value="AIIMS Trauma Center, Emergency Ward" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white transition">
+        </div>
+      </div>
+
+      <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-800 flex items-start gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600"></i>
+        <span>Notice: This access is logged to the national health audit register. An emergency SMS alert will be instantly dispatched to the patient's family.</span>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button onclick="closeDoctorAuthModal()" class="px-4 py-2 text-xs text-slate-600 hover:text-slate-900 font-semibold">
+          Cancel
+        </button>
+        <button onclick="verifyDoctorAndUnlock()" class="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-bold rounded-xl shadow transition">
+          Verify & Unlock Patient Dossier
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- EMERGENCY CALL ACTION MODAL                                    -->
+  <!-- ============================================================== -->
+  <div id="emergency-call-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-emerald-400 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6 text-center">
+      
+      <!-- Ringing Beacon -->
+      <div class="flex justify-center">
+        <div class="relative">
+          <div class="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 emergency-pulse">
+            <i data-lucide="phone-outgoing" class="w-9 h-9 animate-bounce"></i>
+          </div>
+          <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white animate-ping"></span>
+        </div>
+      </div>
+
+      <!-- Calling details -->
+      <div class="space-y-1">
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center justify-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+          Emergency Line Connected
+        </div>
+        <h3 class="text-2xl font-black text-slate-900" id="call-modal-name">Priya Sharma</h3>
+        <p class="text-xs text-slate-500" id="call-modal-rel">Primary In Case of Emergency (Spouse)</p>
+      </div>
+
+      <!-- Phone Number Badge -->
+      <div class="p-3.5 bg-slate-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+        <span class="text-xs text-slate-500 font-mono">Dialing:</span>
+        <span class="text-lg font-black text-emerald-700 font-mono" id="call-modal-phone">+91 98765 43210</span>
+        <button onclick="copyCurrentCallNumber()" class="p-1.5 text-slate-500 hover:text-slate-800 bg-white border border-slate-200 rounded-lg text-xs shadow-sm" title="Copy Number">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="space-y-2.5 pt-2">
+        <!-- 1: Native Phone Dialer -->
+        <a id="call-modal-tel-link" href="tel:+919876543210" onclick="handleDirectDialTriggered()" class="w-full flex items-center justify-center gap-2.5 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-2xl shadow transition">
+          <i data-lucide="phone" class="w-4 h-4"></i>
+          <span>Dial Directly on Device</span>
+        </a>
+
+        <!-- 2: Send WhatsApp Emergency Alert with Location -->
+        <button onclick="sendEmergencyWhatsAppAlert()" class="w-full flex items-center justify-center gap-2.5 py-3 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] border border-[#25D366]/40 text-xs sm:text-sm font-bold rounded-2xl transition">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>Send WhatsApp Emergency SOS Alert</span>
+        </button>
+
+        <!-- 3: Play Ringtone Audio Demo -->
+        <button onclick="playRingTone()" class="w-full flex items-center justify-center gap-2 py-2 text-xs text-slate-600 hover:text-slate-900 transition">
+          <i data-lucide="volume-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Simulate Calling Tone Audio</span>
+        </button>
+      </div>
+
+      <!-- Cancel / Close -->
+      <div class="border-t border-slate-100 pt-4">
+        <button onclick="closeEmergencyCallModal()" class="w-full py-2.5 text-xs text-slate-600 hover:text-slate-900 font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 transition">
+          End / Dismiss Call
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- COMPREHENSIVE FOOTER                                           -->
+  <!-- ============================================================== -->
+  <footer class="border-t border-slate-200 bg-slate-100/90 py-10 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-rose-600 flex items-center justify-center font-bold text-white">
+              <i data-lucide="activity" class="w-4 h-4"></i>
+            </div>
+            <span class="text-base font-bold text-slate-900">MedPass • OSHN</span>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Smart India Hackathon 2026 Student Innovation Project. Enabling patient-controlled emergency healthcare triage in the Golden Hour.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Quick Navigation</h4>
+          <ul class="text-xs text-slate-600 space-y-2">
+            <li><button onclick="switchTab('landing')" class="hover:text-slate-900">Home & Problem Statement</button></li>
+            <li><button onclick="switchTab('patient-portal')" class="hover:text-slate-900">Patient Portal & Vitals</button></li>
+            <li><button onclick="switchTab('qr-generator')" class="hover:text-slate-900">Lockscreen & Card Studio</button></li>
+            <li><button onclick="switchTab('emergency-scan')" class="hover:text-slate-900">Emergency Paramedic Scan</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Standards & Governance</h4>
+          <ul class="text-xs text-slate-600 space-y-2">
+            <li><a href="https://abdm.gov.in" target="_blank" class="hover:text-slate-900 flex items-center gap-1">Ayushman Bharat (ABDM) <i data-lucide="external-link" class="w-3 h-3"></i></a></li>
+            <li><a href="https://abha.abdm.gov.in" target="_blank" class="hover:text-slate-900 flex items-center gap-1">ABHA Health Accounts <i data-lucide="external-link" class="w-3 h-3"></i></a></li>
+            <li><button onclick="switchTab('audit-trail')" class="hover:text-slate-900">Access Audit & Privacy</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">National Helplines</h4>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
+              <span class="text-slate-700">National Emergency</span>
+              <strong class="text-rose-600 font-mono">112</strong>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
+              <span class="text-slate-700">Medical / Ambulance</span>
+              <strong class="text-emerald-700 font-mono">108</strong>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="border-t border-slate-200 pt-6 text-center sm:flex sm:justify-between text-xs text-slate-500">
+        <p>© 2026 Team OSHN – Smart India Hackathon. All rights reserved.</p>
+        <p class="mt-1 sm:mt-0">Designed for Emergency Responders & ABDM Interoperability</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
